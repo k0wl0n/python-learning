@@ -1,2 +1,3 @@
 b = 10
-print(b)
+a = "baba"
+print(b, a)
