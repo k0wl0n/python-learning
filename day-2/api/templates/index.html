@@ -1,0 +1,205 @@
+{#
+╔══════════════════════════════════════════════════════════════╗
+║   INDEX.HTML - Daftar Mahasiswa                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+Konsep Jinja2 yang dipakai:
+  extends      → gunakan layout.html sebagai induk
+  block        → override bagian dari layout.html
+  {{ variabel }}    → tampilkan nilai variabel dari Python
+  for ...      → loop list dari Python
+  if ...       → kondisi dari Python
+  | length          → filter: hitung panjang list
+#}
+{% extends "layout.html" %}
+
+{% block title %}Daftar Mahasiswa{% endblock %}
+
+{% block content %}
+
+<!-- ======== HEADER + SEARCH BAR ======== -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">
+        <i class="bi bi-people-fill text-primary me-2"></i>Daftar Mahasiswa
+    </h4>
+    <a href="/tambah" class="btn btn-primary">
+        <i class="bi bi-person-plus-fill me-1"></i>Tambah Mahasiswa
+    </a>
+</div>
+
+<!-- Filter & Search Form
+     method="GET" → parameter masuk ke URL (bisa di-bookmark)
+     Ini berbeda dari form POST yang tidak tampil di URL
+-->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="/" class="row g-2 align-items-end">
+            <!-- Search by nama -->
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">
+                    <i class="bi bi-search me-1"></i>Cari Nama
+                </label>
+                <input type="text" name="search" class="form-control"
+                       placeholder="Ketik nama..." value="{{ search }}">
+            </div>
+            <!-- Filter grade -->
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">
+                    <i class="bi bi-funnel me-1"></i>Grade
+                </label>
+                <select name="grade" class="form-select">
+                    <option value="">Semua</option>
+                    {# Jinja2 selected: pakai kondisi untuk set "selected" #}
+                    {% for g in ["A", "B", "C", "D", "E"] %}
+                    <option value="{{ g }}" {{ "selected" if grade == g else "" }}>
+                        Grade {{ g }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Sort by -->
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">
+                    <i class="bi bi-sort-down me-1"></i>Urutkan
+                </label>
+                <select name="sort" class="form-select">
+                    <option value="">Default</option>
+                    <option value="nilai_akhir" {{ "selected" if sort_by == "nilai_akhir" else "" }}>
+                        Nilai Akhir
+                    </option>
+                    <option value="nama" {{ "selected" if sort_by == "nama" else "" }}>Nama</option>
+                    <option value="nim"  {{ "selected" if sort_by == "nim" else "" }}>NIM</option>
+                </select>
+            </div>
+            <!-- Order asc/desc -->
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">
+                    <i class="bi bi-arrow-down-up me-1"></i>Urutan
+                </label>
+                <select name="order" class="form-select">
+                    <option value="asc"  {{ "selected" if order == "asc"  else "" }}>A → Z / Rendah</option>
+                    <option value="desc" {{ "selected" if order == "desc" else "" }}>Z → A / Tinggi</option>
+                </select>
+            </div>
+            <!-- Tombol -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-search me-1"></i>Cari
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ======== TABEL MAHASISWA ======== -->
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">
+            <!--
+                mahasiswa | length → filter Jinja2 untuk hitung panjang list
+                Sama seperti len(mahasiswa) di Python
+            -->
+            Total: <span class="badge bg-primary">{{ mahasiswa | length }}</span> mahasiswa
+        </span>
+        {% if search %}
+        <span class="text-muted small">
+            Hasil pencarian: "<strong>{{ search }}</strong>"
+            <a href="/" class="ms-2 text-decoration-none">
+                <i class="bi bi-x-circle"></i> Reset
+            </a>
+        </span>
+        {% endif %}
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">ID</th>
+                        <th>Nama</th>
+                        <th>NIM</th>
+                        <th class="text-center">Tugas</th>
+                        <th class="text-center">UTS</th>
+                        <th class="text-center">UAS</th>
+                        <th class="text-center">Nilai Akhir</th>
+                        <th class="text-center">Grade</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center pe-3">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#
+                        for mhs in mahasiswa → loop list dari Python
+                        mhs['nama'] → akses dictionary key
+                        if/else/endif → kondisi di template
+                    #}
+                    {% for mhs in mahasiswa %}
+                    <tr>
+                        <td class="ps-3 text-muted">{{ mhs['id'] }}</td>
+                        <td class="fw-semibold">{{ mhs['nama'] }}</td>
+                        <td><code>{{ mhs['nim'] }}</code></td>
+                        <td class="text-center">{{ mhs['nilai_tugas'] }}</td>
+                        <td class="text-center">{{ mhs['nilai_uts'] }}</td>
+                        <td class="text-center">{{ mhs['nilai_uas'] }}</td>
+                        <td class="text-center fw-bold">{{ mhs['nilai_akhir'] }}</td>
+                        <!-- Pakai class CSS grade-A, grade-B, dst. dari layout.html -->
+                        <td class="text-center">
+                            <span class="grade-{{ mhs['grade'] }} fs-5">
+                                {{ mhs['grade'] }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            {# Kondisi di Jinja2: if/else/endif #}
+                            {% if mhs['status'] == 'LULUS' %}
+                                <span class="badge bg-success">LULUS</span>
+                            {% else %}
+                                <span class="badge bg-danger">TIDAK LULUS</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center pe-3">
+                            <!-- Tombol Edit -->
+                            <a href="/edit/{{ mhs['id'] }}"
+                               class="btn btn-sm btn-outline-primary me-1"
+                               title="Edit">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <!-- Tombol Hapus: pakai form POST bukan link GET -->
+                            <!--
+                                Hapus menggunakan form POST, bukan <a href>,
+                                karena operasi destructive tidak boleh GET.
+                                onclick confirm() → konfirmasi sebelum hapus
+                            -->
+                            <form action="/hapus/{{ mhs['id'] }}" method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Hapus {{ mhs['nama'] }}?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        title="Hapus">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {#
+                        else di dalam for → jalankan jika list kosong
+                        Sama seperti "if len(list) == 0"
+                    #}
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            {% if search %}
+                                Tidak ada mahasiswa dengan nama "<strong>{{ search }}</strong>"
+                            {% else %}
+                                Belum ada data mahasiswa.
+                                <a href="/tambah">Tambah sekarang</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,265 @@
+{#
+╔══════════════════════════════════════════════════════════════╗
+║   FORM_MAHASISWA.HTML - Form Tambah & Edit (satu template)   ║
+╚══════════════════════════════════════════════════════════════╝
+
+Satu template dipakai untuk dua keperluan (tambah & edit):
+  - mode="tambah" → form kosong, action POST ke /tambah
+  - mode="edit"   → form pre-filled, action POST ke /edit/<id>
+
+Konsep Jinja2:
+  form.get('nama', '')  → akses dict dengan default kosong
+  if mode == 'edit'     → kondisi untuk beda tampilan
+  value="..."           → pre-fill nilai dari Python
+#}
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if mode == 'edit' %}Edit Mahasiswa{% else %}Tambah Mahasiswa{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb navigasi -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Mahasiswa</a></li>
+        <li class="breadcrumb-item active">
+            {% if mode == 'edit' %}Edit: {{ form.get('nama', '') }}{% else %}Tambah Baru{% endif %}
+        </li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">
+                    {% if mode == 'edit' %}
+                        <i class="bi bi-pencil-fill text-primary me-2"></i>
+                        Edit Mahasiswa
+                    {% else %}
+                        <i class="bi bi-person-plus-fill text-success me-2"></i>
+                        Tambah Mahasiswa Baru
+                    {% endif %}
+                </h5>
+            </div>
+
+            <div class="card-body">
+                {#
+                    action → URL tujuan saat form di-submit
+                    method="POST" → data tidak tampil di URL (berbeda dengan GET)
+
+                    Jinja2 url_for():
+                    url_for('tambah') → generate URL /tambah
+                    url_for('edit', id=id) → generate URL /edit/1
+                #}
+                <form method="POST"
+                      action="{% if mode == 'edit' %}{{ url_for('edit', id=id) }}{% else %}{{ url_for('tambah') }}{% endif %}">
+
+                    <!-- ===== DATA PRIBADI ===== -->
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-person me-1"></i>Data Pribadi
+                    </h6>
+
+                    <div class="mb-3">
+                        <label for="nama" class="form-label fw-semibold">
+                            Nama Lengkap <span class="text-danger">*</span>
+                        </label>
+                        {#
+                            value="form.get('nama', '')"
+                            → pre-fill dari data Python.
+                            Jika tambah baru: form={} → form.get('nama','') = ''
+                            Jika edit: form=data_mahasiswa → terisi nama
+                        #}
+                        <input type="text" id="nama" name="nama"
+                               class="form-control"
+                               placeholder="Contoh: Budi Santoso"
+                               value="{{ form.get('nama', '') }}"
+                               required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="nim" class="form-label fw-semibold">
+                            NIM <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="nim" name="nim"
+                               class="form-control"
+                               placeholder="Contoh: 2024007"
+                               value="{{ form.get('nim', '') }}"
+                               {% if mode == 'edit' %}readonly{% endif %}
+                               required>
+                        {# if mode == 'edit' → readonly, NIM tidak bisa diubah saat edit #}
+                        {% if mode == 'edit' %}
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle me-1"></i>NIM tidak bisa diubah
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ===== NILAI ===== -->
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-clipboard-data me-1"></i>Nilai
+                        <span class="badge bg-light text-dark ms-1">0 – 100</span>
+                    </h6>
+
+                    <!--
+                        Rumus nilai akhir ditampilkan sebagai info:
+                        Nilai Akhir = Tugas×30% + UTS×30% + UAS×40%
+                    -->
+                    <div class="alert alert-info py-2 mb-3 small">
+                        <i class="bi bi-calculator me-1"></i>
+                        <strong>Rumus:</strong>
+                        Nilai Akhir = (Tugas × 30%) + (UTS × 30%) + (UAS × 40%)
+                        &nbsp;|&nbsp; Grade A≥85, B≥70, C≥55, D≥40, E&lt;40
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- Nilai Tugas -->
+                        <div class="col-md-4">
+                            <label for="nilai_tugas" class="form-label fw-semibold">
+                                Nilai Tugas <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" id="nilai_tugas" name="nilai_tugas"
+                                   class="form-control"
+                                   min="0" max="100" step="0.1"
+                                   placeholder="0 – 100"
+                                   value="{{ form.get('nilai_tugas', '') }}"
+                                   required>
+                        </div>
+                        <!-- Nilai UTS -->
+                        <div class="col-md-4">
+                            <label for="nilai_uts" class="form-label fw-semibold">
+                                Nilai UTS <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" id="nilai_uts" name="nilai_uts"
+                                   class="form-control"
+                                   min="0" max="100" step="0.1"
+                                   placeholder="0 – 100"
+                                   value="{{ form.get('nilai_uts', '') }}"
+                                   required>
+                        </div>
+                        <!-- Nilai UAS -->
+                        <div class="col-md-4">
+                            <label for="nilai_uas" class="form-label fw-semibold">
+                                Nilai UAS <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" id="nilai_uas" name="nilai_uas"
+                                   class="form-control"
+                                   min="0" max="100" step="0.1"
+                                   placeholder="0 – 100"
+                                   value="{{ form.get('nilai_uas', '') }}"
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Preview nilai akhir (dihitung live di browser dengan JS) -->
+                    <div id="preview-nilai" class="alert alert-secondary py-2 mb-4 small d-none">
+                        <i class="bi bi-eye me-1"></i>
+                        <strong>Preview:</strong>
+                        Nilai Akhir = <span id="preview-hasil" class="fw-bold">-</span>
+                        &nbsp;→ Grade <span id="preview-grade" class="fw-bold">-</span>
+                    </div>
+
+                    <!-- ===== TOMBOL AKSI ===== -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if mode == 'edit' %}
+                                <i class="bi bi-save-fill me-1"></i>Simpan Perubahan
+                            {% else %}
+                                <i class="bi bi-person-plus-fill me-1"></i>Tambah Mahasiswa
+                            {% endif %}
+                        </button>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Batal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info box: menunjukkan data yang dikirim ke API -->
+        <div class="card mt-3">
+            <div class="card-header bg-light py-2">
+                <small class="text-muted fw-semibold">
+                    <i class="bi bi-braces me-1"></i>
+                    Payload yang dikirim ke API
+                </small>
+            </div>
+            <div class="card-body py-2">
+                <pre class="mb-0 small text-muted" id="payload-preview">{
+  "nama": "...",
+  "nim": "...",
+  "nilai_tugas": ...,
+  "nilai_uts": ...,
+  "nilai_uas": ...
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * Preview nilai akhir secara real-time saat user mengetik nilai.
+ * Ini adalah JavaScript browser (bukan Python), berjalan di sisi client.
+ *
+ * Rumus sama persis dengan Python:
+ *   nilai_akhir = (tugas * 0.3) + (uts * 0.3) + (uas * 0.4)
+ */
+
+const inputTugas  = document.getElementById("nilai_tugas");
+const inputUts    = document.getElementById("nilai_uts");
+const inputUas    = document.getElementById("nilai_uas");
+const inputNama   = document.getElementById("nama");
+const inputNim    = document.getElementById("nim");
+
+// Hitung grade dari nilai akhir (sama dengan GRADE_CONFIG Python)
+function hitungGrade(nilaiAkhir) {
+    if (nilaiAkhir >= 85) return "A";
+    if (nilaiAkhir >= 70) return "B";
+    if (nilaiAkhir >= 55) return "C";
+    if (nilaiAkhir >= 40) return "D";
+    return "E";
+}
+
+// Warna per grade
+const gradeColor = { A: "#198754", B: "#0d6efd", C: "#fd7e14", D: "#dc3545", E: "#6c757d" };
+
+function updatePreview() {
+    const tugas = parseFloat(inputTugas.value) || 0;
+    const uts   = parseFloat(inputUts.value)   || 0;
+    const uas   = parseFloat(inputUas.value)   || 0;
+
+    if (inputTugas.value || inputUts.value || inputUas.value) {
+        const nilaiAkhir = Math.round(((tugas * 0.3) + (uts * 0.3) + (uas * 0.4)) * 100) / 100;
+        const grade      = hitungGrade(nilaiAkhir);
+
+        document.getElementById("preview-hasil").textContent = nilaiAkhir.toFixed(2);
+        document.getElementById("preview-grade").textContent = grade;
+        document.getElementById("preview-grade").style.color = gradeColor[grade];
+        document.getElementById("preview-nilai").classList.remove("d-none");
+    }
+
+    // Update payload preview
+    const nama  = inputNama.value || "...";
+    const nim   = inputNim.value  || "...";
+    const t     = inputTugas.value || "...";
+    const u     = inputUts.value   || "...";
+    const a     = inputUas.value   || "...";
+    document.getElementById("payload-preview").textContent =
+        `{\n  "nama": "${nama}",\n  "nim": "${nim}",\n  "nilai_tugas": ${t},\n  "nilai_uts": ${u},\n  "nilai_uas": ${a}\n}`;
+}
+
+// Event listener: jalankan updatePreview setiap kali input berubah
+[inputTugas, inputUts, inputUas, inputNama, inputNim].forEach(el => {
+    el.addEventListener("input", updatePreview);
+});
+
+// Jalankan sekali saat halaman load (untuk mode edit yang sudah ada nilainya)
+updatePreview();
+</script>
+{% endblock %}
