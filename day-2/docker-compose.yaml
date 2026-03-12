@@ -24,12 +24,12 @@ services:
       start_period: 30s
 
   # ============================================================
-  # BACKEND API: Flask + MySQL (step_04)
-  # http://localhost:5001
+  # STEP 03: Data Model CRUD Test Server
+  # http://localhost:5002
   # ============================================================
-  # backend:
+  # step03:
   #   build: ./api
-  #   container_name: backend-api
+  #   container_name: step03-crud-test
   #   restart: unless-stopped
   #   depends_on:
   #     mysql:
@@ -40,27 +40,48 @@ services:
   #     DB_USER: devuser
   #     DB_PASSWORD: devpassword
   #     DB_NAME: nilai_mahasiswa
-  #     FLASK_DEBUG: "false"
   #   ports:
-  #     - "5001:5001"
-  #   command: python step_04_backend_api.py
+  #     - "5002:5002"
+  #   command: python step_03_data_model.py --server --mysql
+
+  # ============================================================
+  # BACKEND API: Flask + MySQL (step_04)
+  # http://localhost:5001
+  # ============================================================
+  backend:
+    build: ./api
+    container_name: backend-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: devuser
+      DB_PASSWORD: devpassword
+      DB_NAME: nilai_mahasiswa
+      FLASK_DEBUG: "false"
+    ports:
+      - "5001:5001"
+    command: python step_04_backend_api.py
 
   # # ============================================================
   # # FRONTEND: Flask + Bootstrap + Requests (step_05)
   # # http://localhost:8001
   # # ============================================================
-  # frontend:
-  #   build: ./api
-  #   container_name: frontend-web
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - backend
-  #   environment:
-  #     API_BASE: http://backend:5001
-  #     FLASK_DEBUG: "false"
-  #   ports:
-  #     - "8001:8001"
-  #   command: python step_05_frontend.py
+  frontend:
+    build: ./api
+    container_name: frontend-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      API_BASE: http://backend:5001
+      FLASK_DEBUG: "false"
+    ports:
+      - "8001:8001"
+    command: python step_05_frontend.py
 
   # ============================================================
   # PHPMYADMIN: GUI Database Manager
