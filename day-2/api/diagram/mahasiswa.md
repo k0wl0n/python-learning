@@ -1,30 +1,30 @@
 flowchart TD
-    A["🌐 GET /mahasiswa\n?sort=&order=&grade="] --> B["Extract Query Parameters"]
-    B --> B1["sort_by = request.args.get('sort')\norder = request.args.get('order', 'asc')\nfilter_grade = request.args.get('grade')"]
+    A["🌐 GET /mahasiswa"] --> B["Ambil parameter dari URL"]
+    B --> B1["Baca parameter:<br>• sort (kolom pengurutan)<br>• order (asc / desc)<br>• grade (filter nilai huruf)"]
 
-    B1 --> C{"sort_by ada\nDAN\nsort_by ∉ whitelist?"}
-    C -- "Ya (invalid)" --> C1["❌ response_err()\n'sort harus salah satu dari:\nnilai_akhir, nama, nim, id'"]
+    B1 --> C{"Kolom sort<br>valid?"}
+    C -- "Tidak valid" --> C1["❌ Kembalikan pesan error:<br>kolom sort tidak dikenali"]
 
-    C -- "Tidak" --> D["sql = 'SELECT * FROM mahasiswa'\nparams = [ ]"]
+    C -- "Valid / kosong" --> D["Siapkan query dasar:<br>ambil semua data mahasiswa"]
 
-    D --> E{"filter_grade\nada?"}
-    E -- "Ya" --> E1["sql += ' WHERE grade = %s'\nparams.append(grade.upper())"]
+    D --> E{"Ada filter<br>grade?"}
+    E -- "Ya" --> E1["Tambahkan kondisi:<br>hanya ambil grade tertentu"]
     E1 --> F
-    E -- "Tidak" --> F{"sort_by\nada?"}
+    E -- "Tidak" --> F{"Ada<br>pengurutan?"}
 
-    F -- "Ya" --> F1{"order == 'desc'?"}
-    F1 -- "Ya" --> F2["direction = 'DESC'"]
-    F1 -- "Tidak" --> F3["direction = 'ASC'"]
-    F2 --> F4["sql += ' ORDER BY {sort_by} {direction}'"]
+    F -- "Ya" --> F1{"Urutan<br>menurun?"}
+    F1 -- "Ya" --> F2["Urutkan dari besar ke kecil"]
+    F1 -- "Tidak" --> F3["Urutkan dari kecil ke besar"]
+    F2 --> F4["Tambahkan pengurutan ke query"]
     F3 --> F4
 
     F -- "Tidak" --> G
-    F4 --> G["conn = get_db()\ncursor = conn.cursor()"]
+    F4 --> G["Buka koneksi database"]
 
-    G --> H["cursor.execute(sql, params)"]
-    H --> I["rows = cursor.fetchall()\nhasil = rows_to_list(cursor, rows)"]
-    I --> J["cursor.close()\nconn.close()"]
-    J --> K["✅ response_ok()\ndata=hasil\nmessage='N mahasiswa ditemukan'"]
+    G --> H["Jalankan query ke MySQL"]
+    H --> I["Ambil semua baris hasil<br>dan ubah ke format daftar"]
+    I --> J["Tutup koneksi database"]
+    J --> K["✅ Kirim respons:<br>data mahasiswa + jumlah ditemukan"]
 
     style A fill:#4A90D9,color:#fff
     style C1 fill:#E74C3C,color:#fff
