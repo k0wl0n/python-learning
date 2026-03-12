@@ -1,0 +1,84 @@
+services:
+  # ============================================================
+  # DATABASE: MySQL 8.1
+  # ============================================================
+  mysql:
+    image: mysql:8.1
+    container_name: mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: nilai_mahasiswa
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # auto run saat pertama kali
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================
+  # BACKEND API: Flask + MySQL (step_04)
+  # http://localhost:5001
+  # ============================================================
+  # backend:
+  #   build: ./api
+  #   container_name: backend-api
+  #   restart: unless-stopped
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_HOST: mysql
+  #     DB_PORT: 3306
+  #     DB_USER: devuser
+  #     DB_PASSWORD: devpassword
+  #     DB_NAME: nilai_mahasiswa
+  #     FLASK_DEBUG: "false"
+  #   ports:
+  #     - "5001:5001"
+  #   command: python step_04_backend_api.py
+
+  # # ============================================================
+  # # FRONTEND: Flask + Bootstrap + Requests (step_05)
+  # # http://localhost:8001
+  # # ============================================================
+  # frontend:
+  #   build: ./api
+  #   container_name: frontend-web
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend
+  #   environment:
+  #     API_BASE: http://backend:5001
+  #     FLASK_DEBUG: "false"
+  #   ports:
+  #     - "8001:8001"
+  #   command: python step_05_frontend.py
+
+  # ============================================================
+  # PHPMYADMIN: GUI Database Manager
+  # http://localhost:8080
+  # ============================================================
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin-dev
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 50M
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
